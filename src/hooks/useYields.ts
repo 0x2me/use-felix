@@ -1,0 +1,27 @@
+import { useQuery } from '@tanstack/react-query';
+
+export interface YieldData {
+  id: number;
+  symbol: string;
+  name: string;
+  amount: number;
+  price: number;
+  priceChange: number;
+  usdValue: number;
+}
+
+export function useYields(address?: string) {
+  return useQuery<YieldData[]>({
+    queryKey: ['yields', address],
+    queryFn: async () => {
+      if (!address) {
+        throw new Error('Wallet address is required');
+      }
+      // TODO: Remove useTestData=true after testing
+      const res = await fetch(`/api/tokens?address=${address}&useTestData=true`);
+      if (!res.ok) throw new Error('Failed to fetch tokens');
+      return res.json();
+    },
+    enabled: !!address,
+  });
+}
