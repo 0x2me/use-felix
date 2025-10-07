@@ -2,6 +2,7 @@ import { createPublicClient, http, erc20Abi, Address } from "viem";
 import { mainnet } from "viem/chains";
 import { TOKEN_ADDRESSES } from "@/config/contracts";
 import { unstable_cache } from "next/cache";
+import { CONSTANTS } from "@/config/constants";
 
 const publicClient = createPublicClient({
   chain: mainnet,
@@ -57,13 +58,30 @@ async function fetchTokenBalancesUncached(
   }));
 }
 
-// Cached version - revalidates every 15 seconds
-export const fetchTokenBalances = (walletAddress: Address) =>
-  unstable_cache(
-    () => fetchTokenBalancesUncached(walletAddress),
+/**
+ * Cached version - converts BigInt to string for serialization
+ */
+export async function fetchTokenBalances(walletAddress: Address): Promise<TokenBalanceData[]> {
+  return unstable_cache(
+    async () => {
+      const balances = await fetchTokenBalancesUncached(walletAddress);
+      // Convert BigInt to string for caching, then back to BigInt
+      return balances.map(b => ({
+        address: b.address,
+        balance: b.balance.toString(),
+        decimals: b.decimals,
+      }));
+    },
     ["token-balances", walletAddress],
     {
-      revalidate: 15, // 15 seconds
+      revalidate: CONSTANTS.CACHE.TOKEN_BALANCES,
       tags: ["token-balances", walletAddress],
     }
-  )();
+  )().then(cached =>
+    cached.map(b => ({
+      address: b.address,
+      balance: BigInt(b.balance),
+      decimals: b.decimals,
+    }))
+  );
+}

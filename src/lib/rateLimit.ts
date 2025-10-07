@@ -3,20 +3,23 @@
  */
 
 import { RateLimiter } from 'limiter';
+import { CONSTANTS } from '@/config/constants';
 
 // Store rate limiters per identifier (wallet address, IP, etc)
 const limiters = new Map<string, RateLimiter>();
 
 /**
  * Get or create a rate limiter for an identifier
- * 10 requests per minute per identifier
  */
 function getLimiter(identifier: string): RateLimiter {
   let limiter = limiters.get(identifier);
 
   if (!limiter) {
-    // Token bucket: 60 tokens, refill 60 per minute
-    limiter = new RateLimiter({ tokensPerInterval: 60, interval: 'minute' });
+    // Token bucket: configured requests per minute
+    limiter = new RateLimiter({
+      tokensPerInterval: CONSTANTS.RATE_LIMIT.REQUESTS_PER_MINUTE,
+      interval: 'minute'
+    });
     limiters.set(identifier, limiter);
 
     // Cleanup after 10 minutes of inactivity

@@ -1,9 +1,9 @@
 import { TOKEN_ADDRESSES } from "@/config/contracts";
 import { unstable_cache } from "next/cache";
+import { CONSTANTS } from "@/config/constants";
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
-const CACHE_TTL = 15; // Cache for 60 seconds
+const { MAX_RETRIES, RETRY_DELAY_MS } = CONSTANTS.API;
+const CACHE_TTL = CONSTANTS.CACHE.TOKEN_PRICES;
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -43,7 +43,7 @@ async function fetchTokenPricesUncached() {
       lastError = error instanceof Error ? error : new Error("Unknown error");
 
       if (attempt < MAX_RETRIES) {
-        await sleep(RETRY_DELAY * attempt);
+        await sleep(RETRY_DELAY_MS * attempt);
       }
     }
   }

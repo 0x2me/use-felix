@@ -11,8 +11,7 @@ import { TokenListEmpty } from "@/components/token-list-empty";
 import { LowValueTokens } from "@/components/low-value-tokens";
 import { TestModeToggle, useBinanceWalletToggle } from "@/components/test-mode-toggle";
 import { useMemo } from "react";
-
-const LOW_VALUE_THRESHOLD = 0.1; // $0.10 USD
+import { CONSTANTS } from "@/config/constants";
 
 export default function Home() {
   const { address } = useAccount();
@@ -46,7 +45,7 @@ export default function Home() {
 
     return tokens.reduce(
       (acc, token) => {
-        if (token.usdValue < LOW_VALUE_THRESHOLD) {
+        if (token.usdValue < CONSTANTS.LOW_VALUE_THRESHOLD) {
           acc.lowValueTokens.push(token);
         } else {
           acc.regularTokens.push(token);
