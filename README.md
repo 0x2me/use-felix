@@ -2,7 +2,21 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+### Installation
+
+```bash
+npm install
+```
+
+### Environment Setup
+
+Create a `.env.local` file with your CoinGecko API key:
+
+```
+NEXT_PUBLIC_COINGECKO_API_KEY=your_api_key_here
+```
+
+### Run the Development Server
 
 ```bash
 npm run dev
@@ -16,7 +30,24 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Test Data & Wallet Connection
+
+The app includes a **"Use Binance Test Wallet"** toggle in the top-right corner that controls which data source is used:
+
+### Toggle ON (Binance Test Wallet)
+- Always uses Binance hot wallet address (`0x28C6c06298d514Db089934071355E5743bf21d60`)
+- Fetches **real blockchain data** from this wallet (~$900M+ in tokens)
+- Ignores any connected wallet
+- Useful for testing with real data without needing your own tokens
+
+### Toggle OFF (Normal Mode)
+- **Wallet Connected**: Uses your connected wallet address with **real blockchain data**
+- **No Wallet**: Uses **mock data** for demo purposes (8 sample tokens with fake balances)
+
+### How It Works
+1. The toggle state persists in localStorage across page reloads
+2. When toggled, the app automatically refetches data from the appropriate source
+3. Empty state shown if wallet has no tokens or no tracked tokens
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

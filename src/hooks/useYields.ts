@@ -10,15 +10,14 @@ export interface YieldData {
   usdValue: number;
 }
 
-export function useYields(address?: string) {
+export function useYields(address?: string, useMockData: boolean = false) {
   return useQuery<YieldData[]>({
-    queryKey: ['yields', address],
+    queryKey: ['yields', address, useMockData],
     queryFn: async () => {
       if (!address) {
         throw new Error('Wallet address is required');
       }
-      // TODO: Remove useTestData=true after testing
-      const res = await fetch(`/api/tokens?address=${address}&useTestData=true`);
+      const res = await fetch(`/api/tokens?address=${address}&useTestData=${useMockData}`);
       if (!res.ok) throw new Error('Failed to fetch tokens');
       return res.json();
     },

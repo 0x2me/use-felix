@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, Coins } from 'lucide-react';
 import { YieldData } from '@/hooks/useYields';
 import { TokenCard } from './token-card';
+import { theme } from '@/lib/theme';
+import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/formatters';
 
 interface LowValueTokensProps {
   tokens: YieldData[];
@@ -21,26 +24,26 @@ export function LowValueTokens({ tokens }: LowValueTokensProps) {
   return (
     <div className="space-y-4">
       {/* Summary Card */}
-      <Card className="cursor-pointer hover:shadow-md transition-all" onClick={() => setIsExpanded(!isExpanded)}>
+      <Card className={cn(theme.layout.cardBg, theme.layout.cardBorder, "cursor-pointer hover:shadow-md transition-all")} onClick={() => setIsExpanded(!isExpanded)}>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                <Coins className="h-6 w-6 text-muted-foreground" />
+              <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                <Coins className="h-6 w-6 text-gray-400" />
               </div>
               <div>
-                <div className="font-semibold text-lg">
+                <div className="text-xl font-bold text-gray-900">
                   {tokens.length} low value token{tokens.length !== 1 ? 's' : ''}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-base text-gray-500">
                   Tokens worth less than $0.10
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <div className="font-semibold text-lg">
-                  ${totalValue.toFixed(2)}
+                <div className="text-xl font-medium text-gray-700">
+                  ${formatCurrency(totalValue)}
                 </div>
               </div>
               <Button variant="ghost" size="sm">

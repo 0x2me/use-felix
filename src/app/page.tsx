@@ -7,16 +7,38 @@ import { TokenCard } from "@/components/token-card";
 import { TokenListHeader } from "@/components/token-list-header";
 import { TokenListLoading } from "@/components/token-list-loading";
 import { TokenListError } from "@/components/token-list-error";
+import { TokenListEmpty } from "@/components/token-list-empty";
 import { LowValueTokens } from "@/components/low-value-tokens";
+import { TestModeToggle, useBinanceWalletToggle } from "@/components/test-mode-toggle";
 import { useMemo } from "react";
 
 const LOW_VALUE_THRESHOLD = 0.1; // $0.10 USD
 
 export default function Home() {
   const { address } = useAccount();
-  // TODO: Replace with actual connected wallet address
-  const hardcodedAddress = "0x28C6c06298d514Db089934071355E5743bf21d60"; // Binance hot wallet
-  const { data: tokens, isLoading, error } = useYields(hardcodedAddress);
+  const useBinanceWallet = useBinanceWalletToggle();
+
+  // Determine which address to use
+  const binanceAddress = "0x28C6c06298d514Db089934071355E5743bf21d60";
+
+  let walletAddress: string;
+  let useMockData: boolean;
+
+  if (useBinanceWallet) {
+    // Toggle is ON: Always use Binance wallet with real data
+    walletAddress = binanceAddress;
+    useMockData = false;
+  } else if (address) {
+    // Toggle is OFF + wallet connected: Use connected wallet with real data
+    walletAddress = address;
+    useMockData = false;
+  } else {
+    // Toggle is OFF + no wallet: Use mock data
+    walletAddress = binanceAddress;
+    useMockData = true;
+  }
+
+  const { data: tokens, isLoading, error } = useYields(walletAddress, useMockData);
 
   // Separate tokens into regular and low value
   const { regularTokens, lowValueTokens } = useMemo(() => {
@@ -39,15 +61,16 @@ export default function Home() {
   }, [tokens]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Header with Connect Button */}
-      <header className="fixed top-0 right-0 p-6 z-50">
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Header with Controls */}
+      <header className="fixed top-0 right-0 p-6 z-50 flex items-center gap-4">
+        <TestModeToggle />
         <ConnectButton />
       </header>
 
       {/* Main content - Token List */}
       <main className="flex-1 flex items-center justify-center p-8 pt-24">
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-3xl">
           <div className="space-y-4">
             <TokenListHeader />
 
@@ -55,7 +78,9 @@ export default function Home() {
 
             {error && <TokenListError error={error} />}
 
-            {tokens && (
+            {tokens && tokens.length === 0 && <TokenListEmpty />}
+
+            {tokens && tokens.length > 0 && (
               <>
                 {/* Regular Value Tokens */}
                 {regularTokens.map((token) => (

@@ -7,7 +7,6 @@ export async function GET(request: Request) {
     // Get wallet address from query params
     const { searchParams } = new URL(request.url);
     const walletAddress = searchParams.get("address");
-    // TODO: Remove useTestData=true after testing
     const useTestData = searchParams.get("useTestData") === "true";
 
     if (!walletAddress) {
