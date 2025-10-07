@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { isAddress } from "viem";
 import { fetchTokenBalances } from "@/lib/tokenBalances";
 import { fetchTokenPrices } from "@/lib/tokenPrices";
 import { MOCK_TOKENS } from "@/config/mockData";
+import { TOKEN_MAP } from "@/config/tokens";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function GET(request: Request) {
   try {
@@ -17,52 +20,34 @@ export async function GET(request: Request) {
       );
     }
 
-    // Return mock data for testing
+    // Validate Ethereum address format
+    if (!isAddress(walletAddress)) {
+      return NextResponse.json(
+        { error: "Invalid Ethereum address format" },
+        { status: 400 }
+      );
+    }
+
+    // Return mock data for testing (skip rate limit)
     if (useTestData) {
       return NextResponse.json(MOCK_TOKENS);
     }
 
+    // Rate limiting: 60 requests per minute per wallet
+    const allowed = await checkRateLimit(walletAddress);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     // Fetch token balances and prices in parallel
+    // walletAddress is validated with isAddress() above, safe to cast
     const [tokenBalances, priceData] = await Promise.all([
       fetchTokenBalances(walletAddress as `0x${string}`),
       fetchTokenPrices(),
     ]);
-
-    // Token names mapping
-    const tokenNames: Record<string, { symbol: string; name: string }> = {
-      "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2": {
-        symbol: "WETH",
-        name: "Wrapped Ether",
-      },
-      "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599": {
-        symbol: "WBTC",
-        name: "Wrapped Bitcoin",
-      },
-      "0xd31a59c85ae9d8edefec411d448f90841571b89c": {
-        symbol: "SOL",
-        name: "Wrapped Solana",
-      },
-      "0xb8c77482e45f1f44de1745f52c74426c631bdd52": {
-        symbol: "BNB",
-        name: "Binance Coin",
-      },
-      "0xae7ab96520de3a18e5e111b5eaab095312d7fe84": {
-        symbol: "stETH",
-        name: "Lido Staked Ether",
-      },
-      "0x514910771af9ca656af840dff83e8264ecf986ca": {
-        symbol: "LINK",
-        name: "Chainlink",
-      },
-      "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": {
-        symbol: "USDC",
-        name: "USD Coin",
-      },
-      "0xdac17f958d2ee523a2206206994597c13d831ec7": {
-        symbol: "USDT",
-        name: "Tether USD",
-      },
-    };
 
     // Transform data into our format
     const tokens = tokenBalances
@@ -71,7 +56,7 @@ export async function GET(request: Request) {
         const tokenPrice = priceData[normalizedAddress];
         const amount =
           Number(tokenBalance.balance) / Math.pow(10, tokenBalance.decimals);
-        const tokenInfo = tokenNames[normalizedAddress] || {
+        const tokenInfo = TOKEN_MAP[normalizedAddress] || {
           symbol: "UNKNOWN",
           name: "Unknown Token",
         };
