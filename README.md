@@ -1,31 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Token Tracker
+
+A production-ready cryptocurrency portfolio tracker built with Next.js 15, featuring real-time blockchain data and optimized performance.
+
+## Technical Overview
+
+### Architecture
+- **Framework**: Next.js 15.5.4 (App Router) with TypeScript
+- **API Layer**: Next.js API routes (`/api/tokens`) for secure server-side data fetching
+- **Blockchain**: Viem for Ethereum RPC calls with multicall pattern (batch requests)
+- **Wallet Integration**: RainbowKit + Wagmi for wallet connection
+- **UI**: Tailwind CSS + shadcn/ui component library
+- **State Management**: TanStack Query (React Query) for client-side caching
+
+### Data Fetching Strategy
+
+**Two-tier caching system** for optimal performance:
+
+1. **Blockchain Data** (`/src/lib/tokenBalances.ts`)
+   - Fetches ERC-20 balances using `viem` multicall (single RPC call for all tokens)
+   - Server-side cache: 15 seconds (Next.js `unstable_cache`)
+   - Handles BigInt serialization for cache compatibility
+
+2. **Price Data** (`/src/lib/tokenPrices.ts`)
+   - CoinGecko Pro API for USD prices and 24h changes
+   - Server-side cache: 15 seconds with automatic revalidation
+   - Retry logic with exponential backoff (3 attempts)
+   - API key secured server-side only (not exposed to browser)
+
+3. **Rate Limiting** (`/src/lib/rateLimit.ts`)
+   - Token bucket algorithm (60 requests/minute per wallet)
+   - Prevents API abuse and protects against excessive RPC calls
+   - Uses `limiter` package with per-identifier tracking
+
+### Security Features
+- ✅ Server-side API key storage (no client exposure)
+- ✅ Ethereum address validation (`isAddress` from viem)
+- ✅ Rate limiting per wallet address
+- ✅ Input sanitization and error boundaries
+- ✅ Type-safe contracts with viem's strict typing
+
+### Key Technical Decisions
+- **Multicall Pattern**: Batch all token balance calls into single RPC request (reduces latency from ~8 calls to 1)
+- **Parallel Fetching**: Balance and price data fetched concurrently with `Promise.all`
+- **Cache TTL**: 15s balances trade-offs between freshness and API costs
+- **Centralized Config**: Single source of truth for tokens, constants, and theme (`/src/config/*`)
 
 ## Getting Started
 
 ### Installation
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Environment Setup
 
-Create a `.env.local` file with your CoinGecko API key:
+Copy `.env.example` to `.env.local` and add your API keys:
 
-```
-NEXT_PUBLIC_COINGECKO_API_KEY=your_api_key_here
+```bash
+cp .env.example .env.local
 ```
 
 ### Run the Development Server
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -48,20 +87,3 @@ The app includes a **"Use Binance Test Wallet"** toggle in the top-right corner 
 1. The toggle state persists in localStorage across page reloads
 2. When toggled, the app automatically refetches data from the appropriate source
 3. Empty state shown if wallet has no tokens or no tracked tokens
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
