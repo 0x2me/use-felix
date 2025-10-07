@@ -25,7 +25,7 @@ export function LowValueTokens({ tokens }: LowValueTokensProps) {
     <div className="space-y-4">
       {/* Summary Card */}
       <Card className={cn(theme.layout.cardBg, theme.layout.cardBorder, "cursor-pointer hover:shadow-md transition-all")} onClick={() => setIsExpanded(!isExpanded)}>
-        <CardContent className="p-6">
+        <CardContent className="px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
@@ -42,7 +42,7 @@ export function LowValueTokens({ tokens }: LowValueTokensProps) {
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <div className="text-xl font-medium text-gray-700">
+                <div className={theme.text.usdValue}>
                   ${formatCurrency(totalValue)}
                 </div>
               </div>
